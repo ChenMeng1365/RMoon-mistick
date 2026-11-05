@@ -1,0 +1,13 @@
+{
+  "host": "127.0.0.1",
+  "port": 3100,
+  "data_file": "data/draws.json",
+  "static_dir": "static",
+  "log_dir": "logs",
+  "auto_sync": false,
+  "sync_interval_hours": 24,
+  "request_timeout": 30,
+  "first_prize": 7000000,
+  "second_prize": 200000,
+  "max_body_bytes": 1048576
+}

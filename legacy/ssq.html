@@ -1,0 +1,479 @@
+<!doctype html>
+<!-- coding:utf-8 -->
+<!-- mistick/ssq.html 双色球选号页, 深色紧凑单文件, 零依赖 -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎰</text></svg>">
+<title>mistick · 双色球</title>
+<style>
+:root{--bg:#0b0f17;--pn:#10151f;--ln:#1c2536;--tx:#cbd5e1;--dim:#64748b;--cy:#22d3ee}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font:13px/1.5 "Segoe UI","Microsoft YaHei",sans-serif;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;border-bottom:1px solid var(--ln);background:linear-gradient(180deg,#101a2b,#0b0f17)}
+.brand{font-size:16px;font-weight:700;letter-spacing:1px}
+.brand .sub{color:var(--dim);font-size:12px;font-weight:400;margin-left:8px}
+nav{display:flex;gap:6px}
+nav span{padding:4px 12px;border:1px solid var(--ln);border-radius:4px;color:var(--dim);font-size:12px}
+nav span.on{color:var(--cy);border-color:var(--cy);background:rgba(34,211,238,.08)}
+nav span.off{opacity:.4}
+main{display:grid;grid-template-columns:1fr 360px;gap:12px;padding:12px;max-width:1080px;margin:0 auto}
+.panel{background:var(--pn);border:1px solid var(--ln);border-radius:8px;padding:14px}
+.rule{color:var(--dim);font-size:12px;border:1px solid var(--ln);border-radius:4px;padding:4px 10px;display:inline-block;margin-bottom:4px}
+.cap{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin:10px 0 4px}
+.cnt{color:var(--cy);font-family:Consolas,monospace;font-size:12px;font-weight:400}
+.mini{margin-left:auto;padding:2px 8px;font-size:12px}
+.zone{display:flex;flex-wrap:wrap;gap:6px}
+.zred{width:456px}
+.zblu{width:330px}
+.ball{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#151b28;border:1px solid var(--ln);color:var(--dim);font-family:Consolas,monospace;font-size:13px;cursor:pointer;user-select:none;transition:.15s}
+.ball:hover{border-color:var(--cy);color:var(--cy)}
+.ball.onr{background:radial-gradient(circle at 35% 30%,#f87171,#dc2626);border-color:#f87171;color:#fff;box-shadow:0 0 8px rgba(239,68,68,.5)}
+.ball.onb{background:radial-gradient(circle at 35% 30%,#60a5fa,#2563eb);border-color:#60a5fa;color:#fff;box-shadow:0 0 8px rgba(59,130,246,.5)}
+.curcap{color:var(--dim);font-size:12px;margin-top:6px}
+.cur{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px dashed #223049;border-radius:8px;margin-top:6px;min-height:64px;flex-wrap:wrap}
+.slot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Consolas,monospace;font-size:15px}
+.slot.sr{background:radial-gradient(circle at 35% 30%,#f87171,#dc2626);color:#fff;box-shadow:0 0 10px rgba(239,68,68,.45)}
+.slot.sb{background:radial-gradient(circle at 35% 30%,#60a5fa,#2563eb);color:#fff;box-shadow:0 0 10px rgba(59,130,246,.45);margin-left:14px}
+.slot.se{border:1px dashed #2a3a52;color:#33415a}
+.ops{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+button{padding:8px 6px;background:#151b28;border:1px solid var(--ln);color:var(--tx);border-radius:6px;cursor:pointer;font-size:13px;transition:.15s}
+button:hover{border-color:var(--cy);color:var(--cy)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.pri{background:rgba(34,211,238,.12);border-color:var(--cy);color:var(--cy)}
+.col{display:flex;flex-direction:column;gap:12px}
+.recs{margin-top:8px;max-height:30vh;overflow:auto}
+.draws{max-height:42vh}
+.draw{display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid #161e2c;cursor:pointer}
+.draw:hover{background:#141b28}
+.draw .no{color:var(--dim);font-size:11px;font-family:Consolas,monospace;min-width:44px}
+.draw .rb{color:#f87171;font-family:Consolas,monospace;font-size:13px;letter-spacing:1px}
+.draw .bb{color:#60a5fa;font-family:Consolas,monospace;font-size:13px;font-weight:700;margin-left:4px}
+.draw .dt{color:var(--dim);font-size:11px;min-width:86px}
+.draw .dp{color:var(--dim);font-size:11px;margin-left:auto;font-family:Consolas,monospace}
+.span2{grid-column:1/-1}
+.modes{display:flex;gap:4px;margin-left:auto}
+.modes button{padding:3px 10px;font-size:12px;border-radius:5px}
+.modes button.on{border-color:var(--cy);color:var(--cy);background:rgba(34,211,238,.1)}
+.sbh{font-size:13px;font-weight:600;margin:12px 0 6px}
+.bars{display:flex;align-items:flex-end;gap:3px}
+.bar{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:default}
+.bar .v{font-size:9px;color:var(--dim);font-family:Consolas,monospace}
+.bar .t{width:16px;border-radius:3px 3px 0 0;transition:.3s}
+.bar .n{font-size:10px;color:var(--dim);font-family:Consolas,monospace}
+.cell{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}
+.cbox{border:1px solid var(--ln);border-radius:8px;padding:10px;background:#0d1220}
+.cbox .ct{font-size:12px;font-weight:600;margin-bottom:6px}
+.rline{display:flex;align-items:center;gap:6px;font-size:11px;margin:4px 0}
+.rline .k{width:50px;color:var(--dim);font-family:Consolas,monospace}
+.rline .rb2{flex:1;height:8px;background:#151b28;border-radius:4px;overflow:hidden}
+.rline .rb2 i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#164e63,var(--cy))}
+.rline .p{width:56px;text-align:right;color:var(--cy);font-family:Consolas,monospace}
+.miss{display:flex;flex-wrap:wrap;gap:6px}
+.miss .m1{border:1px solid var(--ln);border-radius:6px;padding:3px 8px;font-size:11px;font-family:Consolas,monospace;color:var(--tx)}
+.miss .m1 b{color:var(--yl);font-weight:700}
+.rec{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid #161e2c;cursor:pointer}
+.rec:hover{background:#141b28}
+.rec .no{color:var(--dim);font-size:11px;font-family:Consolas,monospace;min-width:32px}
+.rec .rb{color:#f87171;font-family:Consolas,monospace;font-size:13px;letter-spacing:1px}
+.rec .bb{color:#60a5fa;font-family:Consolas,monospace;font-size:13px;font-weight:700;margin-left:4px}
+.rec .tm{color:var(--dim);font-size:11px;margin-left:auto}
+.rec .del{padding:0 4px;border:none;background:none;font-size:12px}
+.empty{color:var(--dim);text-align:center;padding:30px 0;font-size:12px}
+#toast{position:fixed;left:50%;top:60px;transform:translateX(-50%) translateY(-20px);background:#16324a;border:1px solid var(--cy);color:var(--cy);padding:8px 16px;border-radius:6px;opacity:0;pointer-events:none;transition:.25s;font-size:13px;z-index:99;max-width:80vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:900px){main{grid-template-columns:1fr}.zred,.zblu{width:100%}.recs{max-height:300px}.draws{max-height:300px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">🎰 mistick <span class="sub">彩票选号台</span></div>
+  <nav>
+    <span class="on">双色球</span>
+    <span class="off" title="待下一页开发">大乐透</span>
+    <span class="off" title="待下一页开发">3D</span>
+    <span class="off" title="待下一页开发">快乐8</span>
+  </nav>
+</header>
+<main>
+  <section class="panel">
+    <div class="rule">玩法: 红球 33 选 6 + 蓝球 16 选 1 · 单注 ¥2</div>
+    <div class="cap">🔴 红球 <span class="cnt" id="rc">0/6</span></div>
+    <div class="zone zred" id="zr"></div>
+    <div class="cap">🔵 蓝球 <span class="cnt" id="bc">0/1</span></div>
+    <div class="zone zblu" id="zb"></div>
+    <div class="curcap">当前选号</div>
+    <div class="cur" id="cur"></div>
+    <div class="ops">
+      <button id="b1" class="pri" title="随机 6 红 + 1 蓝, 填入选区可再调整">🎲 机选一注</button>
+      <button id="b5" title="一次生成 5 注, 直接入记录">🎯 机选五注</button>
+      <button id="bcx" title="清空当前选球区">🧹 清空</button>
+      <button id="bsv" title="当前 6+1 存入注单记录" disabled>💾 存入记录</button>
+    </div>
+  </section>
+  <aside class="col">
+    <section class="panel">
+      <div class="cap">📜 我的注单 <span class="cnt" id="rn">0 注 · ¥0</span><button class="mini" id="bdel" title="清空全部注单">🗑</button></div>
+      <div class="recs" id="recs"></div>
+    </section>
+    <section class="panel">
+      <div class="cap">📡 往期开奖 <span class="cnt" id="dcnt"></span><button class="mini" id="bdraw" title="同步官方+500网双源全量库">🔄 同步数据</button></div>
+      <div class="recs draws" id="draws"></div>
+    </section>
+  </aside>
+  <section class="panel span2" id="pstat">
+    <div class="cap">📊 统计分析 <span class="cnt" id="scnt"></span>
+      <span class="modes">
+        <button class="mode on" data-m="all" title="库内全部期数">全量</button>
+        <button class="mode" data-m="300" title="最近 300 期">近300</button>
+        <button class="mode" data-m="30" title="最近 30 期">近30</button>
+      </span>
+    </div>
+    <div id="statbody"></div>
+  </section>
+</main>
+<div id="toast"></div>
+<script>
+// coding:utf-8
+// mistick/ssq 双色球选号页
+// CALL: 初始化() 脚本尾部自动调用
+// RETN: undefined
+// ☆ 单一数据流向: 状态(红/蓝/档案) -> 刷新()/画记录() 全量重绘, 不做增量
+
+const K = 'mistick-ssq-recs'   // localStorage 档案键
+const MAX = 500                // 注单上限, 超限丢最旧
+const 红 = new Set()            // 选区红球, 界面唯一源头
+let 蓝 = 0                     // 选区蓝球, 0=未选
+let 档案 = []                  // [{r:[6数], b:n, t:毫秒}]
+
+//#### 工具 ####
+const $ = id => document.getElementById(id)
+const 零 = n => String(n).padStart(2, '0')
+const 刻 = t => { const d = new Date(t)
+  return 零(d.getMonth()+1) + '-' + 零(d.getDate()) + ' ' + 零(d.getHours()) + ':' + 零(d.getMinutes()) }
+
+let $_t_ = null               // toast 定时器
+function 浮(msg) {              //=> 屏顶短提示, 1.8s 自灭
+  const t = $('toast')
+  t.textContent = msg; t.classList.add('show')
+  clearTimeout($_t_); $_t_ = setTimeout(()=>t.classList.remove('show'), 1800)
+}
+
+//#### 档案 ####
+function 载档案() {              //=> 记录数组, 解析失败回空
+  try { return JSON.parse(localStorage.getItem(K) || '[]') } catch(e) { return [] }
+}
+function 写档案() {
+  if (档案.length > MAX) 档案 = 档案.slice(-MAX)
+  localStorage.setItem(K, JSON.stringify(档案))
+}
+
+//#### 选区 ####
+function 画球区(el, total, kind) { // 生成 01..total 球钮
+  for (let n = 1; n <= total; n++) {
+    const b = document.createElement('div')
+    b.className = 'ball'; b.textContent = 零(n)
+    b.onclick = () => 点球(kind, n)
+    el.appendChild(b)
+  }
+}
+function 点球(kind, n) {         // 单点切换, 红满 6 拒绝
+  if (kind == 'r') {
+    if (红.has(n)) 红.delete(n)
+    else if (红.size >= 6) { 浮('红球最多选 6 个'); return }
+    else 红.add(n)
+  } else {
+    蓝 = (蓝 == n) ? 0 : n
+  }
+  刷新()
+}
+function 清区() { 红.clear(); 蓝 = 0; 刷新() }
+
+function 抽红() {               //=> 6 个升序红球
+  const s = new Set()
+  while (s.size < 6) s.add(1 + Math.floor(Math.random()*33))
+  return [...s].sort((a,b)=>a-b)
+}
+const 抽蓝 = () => 1 + Math.floor(Math.random()*16)
+
+function 刷新() {               // 选区全量重绘
+  const rs = [...红].sort((a,b)=>a-b)
+  document.querySelectorAll('#zr .ball').forEach((b,i)=>{ b.classList.toggle('onr', 红.has(i+1)) })
+  document.querySelectorAll('#zb .ball').forEach((b,i)=>{ b.classList.toggle('onb', 蓝 == i+1) })
+  $('rc').textContent = 红.size + '/6'
+  $('bc').textContent = (蓝 ? 1 : 0) + '/1'
+  const c = $('cur'); c.innerHTML = ''
+  for (let i = 0; i < 6; i++) {
+    const s = document.createElement('span')
+    s.className = 'slot ' + (rs[i] ? 'sr' : 'se')
+    s.textContent = rs[i] ? 零(rs[i]) : '·'
+    c.appendChild(s)
+  }
+  const b = document.createElement('span')
+  b.className = 'slot ' + (蓝 ? 'sb' : 'se')
+  b.textContent = 蓝 ? 零(蓝) : '·'
+  c.appendChild(b)
+  $('bsv').disabled = !(红.size == 6 && 蓝 > 0)
+}
+
+//#### 注单 ####
+function 存注() {               // 选区 6+1 入档案, 入后清区
+  const rs = [...红].sort((a,b)=>a-b)
+  档案.push({ r: rs, b: 蓝, t: Date.now() })
+  写档案(); 清区(); 画记录(); 浮('已存入注单 ✓')
+}
+function 机选填区() {           // 随机一注填选区, 可再手改
+  红.clear(); 抽红().forEach(n=>红.add(n)); 蓝 = 抽蓝()
+  刷新(); 浮('已机选一注 🎲')
+}
+function 机选五注() {           // 5 注直入档案
+  for (let i = 0; i < 5; i++) 档案.push({ r: 抽红(), b: 抽蓝(), t: Date.now() })
+  写档案(); 画记录(); 浮('机选 5 注已入记录 🎯')
+}
+function 画记录() {
+  const box = $('recs'); box.innerHTML = ''
+  $('rn').textContent = 档案.length + ' 注 · ¥' + 档案.length*2
+  if (!档案.length) {
+    const e = document.createElement('div')
+    e.className = 'empty'; e.textContent = '暂无注单, 🎲 机选一注开始'
+    box.appendChild(e); return
+  }
+  ;[...档案].reverse().forEach((x, i) => {
+    const n = 档案.length - i           // 序号: 最新在顶, 编号按插入序
+    const d = document.createElement('div')
+    d.className = 'rec'; d.title = '点击复制号码'
+    const no = document.createElement('span'); no.className = 'no'; no.textContent = '#' + 零(n)
+    const rb = document.createElement('span'); rb.className = 'rb'; rb.textContent = x.r.map(零).join(' ')
+    const bb = document.createElement('span'); bb.className = 'bb'; bb.textContent = 零(x.b)
+    const tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = 刻(x.t)
+    const del = document.createElement('button')
+    del.className = 'del'; del.textContent = '🗑'; del.title = '删除此注'
+    del.onclick = e => { e.stopPropagation()
+      档案.splice(n-1, 1); 写档案(); 画记录(); 浮('已删除 #'+零(n)) }
+    d.onclick = () => 复制(x.r.map(零).join(' ') + ' + ' + 零(x.b))
+    d.appendChild(no); d.appendChild(rb); d.appendChild(bb); d.appendChild(tm); d.appendChild(del)
+    box.appendChild(d)
+  })
+}
+function 清记录() {
+  if (!档案.length) { 浮('记录已是空的'); return }
+  if (confirm('确认清空全部 ' + 档案.length + ' 注?')) {
+    档案 = []; 写档案(); 画记录(); 浮('记录已清空')
+  }
+}
+
+//#### 开奖与全量库 ####
+const DK = 'mistick-ssq-draws'   // localStorage 兜底缓存键, 代理不可用时回显近 30 期
+const PX = 'http://127.0.0.1:8761'   // proxy.rb 基地址, 端口变了这里同步改
+let 库 = []                        // 全量开奖 [{c,d,r,b,p,s}] 升序, 源自 draws.json
+let 口径 = 'all'                  // 统计口径: all | 300 | 30
+
+function 同步() {                  // 双源全量同步 -> 重新载库
+  const btn = $('bdraw'); btn.disabled = true
+  $('dcnt').textContent = '同步中…'
+  fetch(PX + '/api/sync')
+    .then(r => r.json())
+    .then(j => {
+      if (j.state != 0) { 浮('同步失败: ' + (j.message || '未知')); 载库(); return }
+      浮('全量库已同步: ' + j.count + ' 期' + (j.added ? ' (新增 ' + j.added + ' 期)' : ' (无新开奖)'))
+      载库()
+    })
+    .catch(() => { 浮('同步失败, 请确认 proxy.rb 已启动 (8761)'); 载库() })
+    .finally(() => { btn.disabled = false })
+}
+function 载库() {                  // GET /api/all -> 库 + 最近30期显示 + 统计
+  fetch(PX + '/api/all')
+    .then(r => r.json())
+    .then(j => {
+      if (!j.draws || !j.draws.length) throw new Error('空库')
+      库 = j.draws
+      const 近30 = 库.slice(-30)
+      localStorage.setItem(DK, JSON.stringify({ t: j.t || Date.now(), ds: 近30 }))
+      画开奖(近30)
+      $('dcnt').textContent = '库 ' + 库.length + ' 期 · 显示近30'
+      画统计()
+    })
+    .catch(() => { 库 = []; 载开奖(); 画统计() })   // 代理不可用回退本地缓存
+}
+
+/* =begin 旧入口, 已由 同步()+载库() 替代, 隔离保留进化路径
+function 拉开奖() {
+  const btn = $('bdraw'); btn.disabled = true
+  $('dcnt').textContent = '拉取中…'
+  fetch(PX + '?count=30')
+    .then(r => r.json())
+    .then(j => {
+      if (j.state != 0 || !j.result || !j.result.length) { 浮('拉取失败: ' + (j.message || '无数据')); 画开奖(null); return }
+      const ds = j.result.map(x => ({ c: x.code, r: x.red, b: x.blue, d: x.date, p: x.poolmoney }))
+      localStorage.setItem(DK, JSON.stringify({ t: Date.now(), ds: ds }))
+      画开奖(ds); 浮('已更新 ' + ds.length + ' 期开奖 📡')
+    })
+    .catch(() => { 浮('拉取失败, 请确认 proxy.rb 已启动 (8761)'); 画开奖(null) })
+    .finally(() => { btn.disabled = false })
+}
+=end */
+function 画开奖(ds) {
+  const box = $('draws'); box.innerHTML = ''
+  if (!ds || !ds.length) {
+    $('dcnt').textContent = ''
+    const e = document.createElement('div')
+    e.className = 'empty'; e.textContent = '尚无开奖数据, 点击 🔄 同步数据'
+    box.appendChild(e); return
+  }
+  $('dcnt').textContent = ds.length + ' 期'
+  ds.forEach(x => {
+    const d = document.createElement('div')
+    d.className = 'draw'; d.title = '点击复制开奖号码'
+    const no = document.createElement('span'); no.className = 'no'; no.textContent = x.c
+    const rb = document.createElement('span'); rb.className = 'rb'; rb.textContent = x.r.split(',').join(' ')
+    const bb = document.createElement('span'); bb.className = 'bb'; bb.textContent = x.b
+    const dt = document.createElement('span'); dt.className = 'dt'; dt.textContent = x.d
+    const dp = document.createElement('span'); dp.className = 'dp'
+    dp.textContent = x.p ? '池 ' + (x.p/1e8).toFixed(2) + '亿' : ''
+    d.onclick = () => 复制(x.r.split(',').join(' ') + ' + ' + x.b)
+    d.appendChild(no); d.appendChild(rb); d.appendChild(bb); d.appendChild(dt); d.appendChild(dp)
+    box.appendChild(d)
+  })
+}
+function 载开奖() {                // 缓存回显, 免重复拉取
+  try { const j = JSON.parse(localStorage.getItem(DK) || 'null')
+    if (j && j.ds && j.ds.length) 画开奖(j.ds)
+    else 画开奖(null)
+  } catch(e) { 画开奖(null) }
+}
+
+//#### 统计 ####
+function 算统计(切) {              //=> 频率/遗漏/和值/形态 一把抓, 切为升序切片
+  const rf = Array(34).fill(0), bf = Array(17).fill(0)
+  const mr = Array(34).fill(-1), mb = Array(17).fill(-1)
+  const 和桶 = [0,0,0,0,0], 奇偶 = {}, 大小 = {}, 三区 = {}
+  for (let i = 切.length - 1; i >= 0; i--) {   // 从最新往回, pos=0 即最新期
+    const pos = 切.length - 1 - i
+    const r = 切[i].r.split(',').map(Number)
+    const b = +切[i].b
+    const 奇 = r.filter(n => n%2).length
+    const 小 = r.filter(n => n <= 16).length
+    const a = r.filter(n => n <= 11).length
+    const c = r.filter(n => n >= 23).length
+    const s = r.reduce((x,y) => x+y, 0)
+    r.forEach(n => { rf[n]++; if (mr[n] < 0) mr[n] = pos })
+    bf[b]++; if (mb[b] < 0) mb[b] = pos
+    和桶[s<=70?0:s<=100?1:s<=130?2:s<=160?3:4]++
+    奇偶[奇+'奇'+(6-奇)+'偶'] = (奇偶[奇+'奇'+(6-奇)+'偶']||0)+1
+    大小[小+':'+(6-小)] = (大小[小+':'+(6-小)]||0)+1
+    三区[a+':'+(6-a-c)+':'+c] = (三区[a+':'+(6-a-c)+':'+c]||0)+1
+  }
+  return { rf, bf, mr, mb, 和桶, 奇偶, 大小, 三区, n: 切.length }
+}
+function 画条图(el, freq, 类, 总) {   // 热度渐变竖条, hover 出次数与占比
+  const max = Math.max(...freq.slice(1)) || 1
+  el.innerHTML = ''
+  for (let n = 1; n < freq.length; n++) {
+    const u = freq[n]/max
+    const bar = document.createElement('div')
+    bar.className = 'bar'
+    bar.title = '号码 ' + n + ': ' + freq[n] + ' 次 / ' + 总 + ' 期 (' + (freq[n]/总*100).toFixed(1) + '%)'
+    bar.innerHTML = '<span class="v">' + (u >= .3 ? freq[n] : '') + '</span>'
+      + '<span class="t" style="height:' + (5 + u*62) + 'px;background:' + (类 == 'r'
+        ? 'hsl(8,72%,' + (30 + u*36) + '%)' : 'hsl(205,72%,' + (30 + u*40) + '%)') + '"></span>'
+      + '<span class="n">' + n + '</span>'
+    el.appendChild(bar)
+  }
+}
+function 盒(标题) { const d = document.createElement('div'); d.className = 'cbox'
+  d.innerHTML = '<div class="ct">' + 标题 + '</div>'; return d }
+function 横条(k, u, 右文) {
+  const d = document.createElement('div'); d.className = 'rline'
+  d.innerHTML = '<span class="k">' + k + '</span><span class="rb2"><i style="width:'
+    + Math.min(100, u*100) + '%"></i></span><span class="p">' + 右文 + '</span>'
+  return d
+}
+function 画统计() {
+  const box = $('statbody')
+  if (!库 || !库.length) {
+    $('scnt').textContent = ''; box.innerHTML = ''
+    const e = document.createElement('div')
+    e.className = 'empty'; e.textContent = '暂无全量库, 点击上方 🔄 同步数据 建库 (需 proxy.rb 运行在 8761)'
+    box.appendChild(e); return
+  }
+  const 切 = 口径 == 'all' ? 库 : 库.slice(-(+口径))
+  const st = 算统计(切)
+  $('scnt').textContent = (口径 == 'all' ? '全量' : '近' + 口径) + ' ' + st.n + ' 期 · ' + 切[0].c + ' ~ ' + 切[切.length-1].c
+  box.innerHTML = ''
+  const h1 = document.createElement('div'); h1.className = 'sbh'; h1.textContent = '🔴 红球出现次数'
+  const b1 = document.createElement('div'); b1.className = 'bars'
+  box.appendChild(h1); box.appendChild(b1); 画条图(b1, st.rf, 'r', st.n)
+  const h2 = document.createElement('div'); h2.className = 'sbh'; h2.textContent = '🔵 蓝球出现次数'
+  const b2 = document.createElement('div'); b2.className = 'bars'
+  box.appendChild(h2); box.appendChild(b2); 画条图(b2, st.bf, 'b', st.n)
+  const cell = document.createElement('div'); cell.className = 'cell'
+  const d1 = 盒('⏳ 当前遗漏榜 (连续未出期数)')
+  const w = document.createElement('div'); w.className = 'miss'
+  const rr = []; for (let n = 1; n <= 33; n++) rr.push([n, st.mr[n]])
+  rr.sort((x,y) => y[1] - x[1])
+  rr.slice(0, 8).forEach(([n,v]) => {
+    const m = document.createElement('span'); m.className = 'm1'
+    m.textContent = '红' + 零(n) + ' ' + (v < 0 ? '未见' : v + '期'); w.appendChild(m)
+  })
+  const bb2 = []; for (let n = 1; n <= 16; n++) bb2.push([n, st.mb[n]])
+  bb2.sort((x,y) => y[1] - x[1])
+  bb2.slice(0, 4).forEach(([n,v]) => {
+    const m = document.createElement('span'); m.className = 'm1'
+    m.textContent = '蓝' + 零(n) + ' ' + (v < 0 ? '未见' : v + '期'); w.appendChild(m)
+  })
+  d1.appendChild(w); cell.appendChild(d1)
+  const d2 = 盒('💵 和值分布 (6 红之和)')
+  const 签 = ['21~70','71~100','101~130','131~160','161~183']
+  const hmax = Math.max(...st.和桶) || 1
+  st.和桶.forEach((v, i) => d2.appendChild(横条(签[i], v/hmax, v + '次')))
+  cell.appendChild(d2)
+  const 形 = (题, obj) => {
+    const d = 盒(题)
+    const ent = Object.entries(obj).sort((x,y) => y[1] - x[1]).slice(0, 3)
+    const mx = ent.length ? ent[0][1] : 1
+    ent.forEach(([k, v]) => d.appendChild(横条(k, v/mx, (v/st.n*100).toFixed(1) + '%')))
+    return d
+  }
+  cell.appendChild(形('⚖️ 奇偶比分布', st.奇偶))
+  cell.appendChild(形('📐 大小比分布 (小≤16)', st.大小))
+  cell.appendChild(形('🗺️ 三区比分布', st.三区))
+  box.appendChild(cell)
+}
+
+//#### 复制 ####
+function 复制(t) {              // clipboard 优先, execCommand 兜底
+  const ok = () => 浮('已复制: ' + t)
+  const fallback = () => {
+    const a = document.createElement('textarea')
+    a.value = t; document.body.appendChild(a)
+    a.select(); document.execCommand('copy'); a.remove(); ok()
+  }
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok).catch(fallback)
+  else fallback()
+}
+
+//#### 入口 ####
+function 初始化() {
+  画球区($('zr'), 33, 'r')
+  画球区($('zb'), 16, 'b')
+  档案 = 载档案()
+  $('b1').onclick = 机选填区
+  $('b5').onclick = 机选五注
+  $('bcx').onclick = 清区
+  $('bsv').onclick = 存注
+  $('bdel').onclick = 清记录
+  $('bdraw').onclick = 同步
+  document.querySelectorAll('.modes .mode').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('.modes .mode').forEach(o => o.classList.remove('on'))
+      b.classList.add('on'); 口径 = b.dataset.m; 画统计()
+    }
+  })
+  刷新(); 画记录(); 载库()
+}
+初始化()
+// [TODO] 复式/胆拖选球(红>6), 大乐透页(35选5+12选2), 快乐8, 历史期号对照与命中校验
+</script>
+</body>
+</html>

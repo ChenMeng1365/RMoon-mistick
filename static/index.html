@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070a10">
+<title>mistick · 双色球选号台</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23070a10'/%3E%3Ctext x='50' y='68' font-size='54' text-anchor='middle' fill='%2322d3ee'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">M</div>
+    <div class="brand-text"><b>mistick</b><small>双色球选号台</small></div>
+  </div>
+  <nav class="nav" aria-label="彩种">
+    <a class="on" href="#">双色球</a>
+    <span title="待开发">大乐透</span>
+    <span title="待开发">3D</span>
+    <span title="待开发">快乐8</span>
+  </nav>
+  <div class="status" id="status"><i></i><span>连接中…</span></div>
+</header>
+
+<main class="layout">
+  <section class="panel picker">
+    <div class="panel-head">
+      <div class="tabs" id="modeTabs" role="tablist">
+        <button class="tab on" data-mode="single" type="button">单式</button>
+        <button class="tab" data-mode="multiple" type="button">复式</button>
+        <button class="tab" data-mode="dantuo" type="button">胆拖</button>
+        <button class="tab" data-mode="smart" type="button">智能</button>
+      </div>
+      <span class="rule">红 33 选 6 + 蓝 16 选 1 · 单注 ¥2</span>
+    </div>
+
+    <div class="pane" id="manualPane">
+      <div class="pick-head">
+        <div class="pick-title">红球 <span id="redCount">0/6</span></div>
+        <div class="seg" id="dantuoSwitch" hidden>
+          <button class="on" data-set="drag" type="button">拖码</button>
+          <button data-set="dan" type="button">胆码</button>
+        </div>
+      </div>
+      <div class="balls red" id="redBalls"></div>
+
+      <div class="pick-head">
+        <div class="pick-title">蓝球 <span id="blueCount">0/1</span></div>
+      </div>
+      <div class="balls blue" id="blueBalls"></div>
+
+      <div class="selection" id="selection"></div>
+      <div class="selection-meta">
+        <span id="ticketMeta">0 注 · ¥0</span>
+        <span id="modeHint">单式：红球 6 个，蓝球 1 个</span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="saveBtn" type="button" disabled>存入注单</button>
+        <button class="btn" id="randomBtn" type="button">机选一注</button>
+        <button class="btn" id="wheelOpenBtn" type="button">旋转矩阵</button>
+        <button class="btn ghost" id="clearBtn" type="button">清空</button>
+      </div>
+    </div>
+
+    <div class="pane" id="smartPane" hidden>
+      <div class="smart-intro">
+        <div>
+          <h2>策略生成</h2>
+          <p>用历史分布做权重与过滤。策略不改变单注概率，只改变号码分布、覆盖与成本。</p>
+        </div>
+        <span class="badge">回测可证伪</span>
+      </div>
+      <div class="form-grid">
+        <label>策略
+          <select id="strategySel"></select>
+        </label>
+        <label>统计窗口
+          <select id="strategyWindow">
+            <option value="30">近 30 期</option>
+            <option value="100" selected>近 100 期</option>
+            <option value="300">近 300 期</option>
+            <option value="500">近 500 期</option>
+          </select>
+        </label>
+        <label>生成注数
+          <input id="genCount" type="number" min="1" max="20" value="5">
+        </label>
+      </div>
+      <label class="checkline"><input type="checkbox" id="useFilters"> 附加硬过滤（和值 / 奇偶 / 跨度 / 连号 / 排除号）</label>
+      <div class="filter-grid" id="filterGrid" hidden>
+        <label>和值范围
+          <span class="range"><input id="fSumMin" type="number" min="21" max="183" value="21"><i>~</i><input id="fSumMax" type="number" min="21" max="183" value="183"></span>
+        </label>
+        <label>奇数个数
+          <span class="range"><input id="fOddMin" type="number" min="0" max="6" value="0"><i>~</i><input id="fOddMax" type="number" min="0" max="6" value="6"></span>
+        </label>
+        <label>跨度
+          <span class="range"><input id="fSpanMin" type="number" min="5" max="32" value="5"><i>~</i><input id="fSpanMax" type="number" min="5" max="32" value="32"></span>
+        </label>
+        <label>连号上限
+          <input id="fConsec" type="number" min="0" max="5" value="5">
+        </label>
+        <label class="wide">排除号码
+          <input id="fExclude" type="text" placeholder="如 1,2,3；留空不排除">
+        </label>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="generateBtn" type="button">生成号码</button>
+        <button class="btn ghost" id="genClearBtn" type="button">清空结果</button>
+      </div>
+      <div id="genResult" class="gen-result"></div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>我的注单 <span class="count" id="recCount">0 注</span></h2>
+        <div class="head-actions">
+          <button class="icon-btn" id="exportBtn" type="button" title="导出 JSON">⇩</button>
+          <button class="icon-btn" id="clearRecBtn" type="button" title="清空注单">⌫</button>
+        </div>
+      </div>
+      <div class="records" id="records"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>往期开奖 <span class="count" id="drawMeta">—</span></h2>
+        <button class="btn small" id="syncBtn" type="button">同步数据</button>
+      </div>
+      <div class="draws" id="draws"></div>
+    </section>
+  </aside>
+
+  <section class="panel stats">
+    <div class="panel-head stats-head">
+      <div class="tabs" id="statTabs" role="tablist">
+        <button class="tab on" data-tab="overview" type="button">总览</button>
+        <button class="tab" data-tab="shape" type="button">形态</button>
+        <button class="tab" data-tab="omission" type="button">遗漏</button>
+        <button class="tab" data-tab="relation" type="button">关系</button>
+        <button class="tab" data-tab="test" type="button">检验</button>
+        <button class="tab" data-tab="backtest" type="button">回测</button>
+      </div>
+      <div class="window-switch" id="windowSwitch">
+        <button class="chip on" data-window="all" type="button">全量</button>
+        <button class="chip" data-window="300" type="button">近 300</button>
+        <button class="chip" data-window="30" type="button">近 30</button>
+      </div>
+    </div>
+    <div class="stat-body" id="statBody"></div>
+  </section>
+</main>
+
+<dialog class="dialog" id="wheelDialog">
+  <div class="dialog-head">
+    <h3>旋转矩阵</h3>
+    <button class="icon-btn" id="wheelClose" type="button">×</button>
+  </div>
+  <p class="dialog-desc">从 7–12 个红球里做覆盖设计：开奖 6 个红球全在池内时，保证至少一注命中指定个数。只保证覆盖，不保证盈利。</p>
+  <label class="field">号码池（7–12 个红球）
+    <input id="wheelPool" type="text" placeholder="1,3,5,7,9,11,13">
+  </label>
+  <div class="form-grid two">
+    <label>保证
+      <select id="wheelGuarantee">
+        <option value="5" selected>中 6 保 5</option>
+        <option value="6">中 6 保 6</option>
+      </select>
+    </label>
+    <label>蓝球
+      <select id="wheelBlue"></select>
+    </label>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="wheelRun" type="button">生成矩阵</button>
+    <button class="btn" id="wheelSave" type="button" disabled>存入注单</button>
+  </div>
+  <div class="gen-result" id="wheelResult"></div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
